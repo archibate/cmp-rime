@@ -3,6 +3,8 @@ local curl = require 'plenary.curl'
 local M = {}
 
 local defaults = {
+    rime_server_cmd = './rime_server',
+    rime_server_address = '127.0.0.1:47992',
     shared_data_dir = '/usr/share/rime-data',
     user_data_dir = vim.fn.getenv('HOME') .. '/.local/share/cmp-rime',
     max_candidates = 10,
@@ -36,16 +38,19 @@ function M.complete(_, request, callback)
         user_data_dir = { opts.user_data_dir, 'string' },
         max_candidates = { opts.max_candidates, 'number' },
     })
+    -- if request.option.enable then
+    -- end
 
     local keys = string.sub(request.context.cursor_before_line, request.offset)
     local cursor = request.context.cursor
-    local cmd = 'cd /tmp && ' .. opts.rime_server_cmd .. ' ' .. opts.rime_server_address .. ' >/dev/null 2>&1'
 
     -- vim.lsp.start({
     --     name = 'cmp-rime',
     --     cmd = {'sh', '-c', cmd},
     -- })
     if not M.server then
+        local thisdir = debug.getinfo(1).source:sub(2):match("(.*)/")
+        local cmd = "cd '" .. thisdir .. "' && " .. opts.rime_server_cmd .. " " .. opts.rime_server_address .. " >/dev/null 2>&1"
         local server = io.popen(cmd, 'r')
         if not server then
             -- local msg = string.format("--- SERVER START ERROR %d ---\n%s", cmd)
@@ -110,7 +115,7 @@ function M.complete(_, request, callback)
                     label = candidate.text,
                     filterText = keys,
                     sortText = "~" .. tostring(i + 100000),
-                    kind = 1,
+                    kind = 0,
                     textEdit = {
                         newText = candidate.text,
                         range = {

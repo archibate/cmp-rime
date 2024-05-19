@@ -1,5 +1,2 @@
-httprime: httprime.c Makefile
-	gcc -O3 -DNDEBUG -lrime httprime.c -o httprime
-
-luarime.so: luarime.c Makefile
-	gcc -I/usr/include/luajit-2.1/ -O3 -DNDEBUG -shared -lrime -llua luarime.c -o luarime.so
+rime_server: rime_server.cpp include Makefile
+	g++ -std=c++20 -O3 -DNDEBUG -lrime -luring -lbearssl -lz -Iinclude rime_server.cpp include/co_async/*/*.cpp -o rime_server

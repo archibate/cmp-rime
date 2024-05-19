@@ -76,7 +76,7 @@ function M.complete(_, request, callback)
                     label = candidate,
                     filterText = keys,
                     sortText = "~100000",
-                    kind = 1,
+                    kind = 0,
                     textEdit = {
                         newText = candidate,
                         range = {
