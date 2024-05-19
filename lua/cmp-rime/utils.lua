@@ -1,6 +1,6 @@
-local curl = require 'plenary.curl'
-
 local M = {}
+
+local curl = require 'plenary.curl'
 
 function M.utf8len(s)
     local len = 0
@@ -75,6 +75,8 @@ function M.detect_context(keys, cursor, context_range, force_enable_prefix)
     local chinese, english = M.detect_chinese_english(line)
     local same_line = true
     if chinese == 0 then
+        chinese = 0
+        english = 0
         same_line = false
         local lines = vim.api.nvim_buf_get_lines(0, math.max(0, cursor.row - 1 - context_range), math.min(linecount, cursor.row + context_range), false)
         for _, l in ipairs(lines) do
@@ -83,10 +85,10 @@ function M.detect_context(keys, cursor, context_range, force_enable_prefix)
             english = english + e
         end
     end
-    local detected = chinese > 0
+    local detected = chinese > 0 or english <= #keys
     if not detected and force_enable_prefix ~= '' then
         keys, detected = M.remove_prefix(keys, force_enable_prefix)
-        if not detected and line:find(force_enable_prefix) then
+        if not detected and line:sub(0, cursor.col - #keys):find(force_enable_prefix) then
         detected = true
         same_line = true
         end

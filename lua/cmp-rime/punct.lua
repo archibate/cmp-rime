@@ -1,6 +1,6 @@
 local M = {}
 
-local utils = require'cmp_rime.utils'
+local utils = require 'cmp-rime.utils'
 
 local defaults = {
     enable = 'auto',

@@ -36,7 +36,7 @@ use {
                       -- 这是我们中文输入法的配置
                       name = 'rime',
                       option = {
-                          max_candidates = 10, -- 一次最多显示的候选项数量
+                          max_candidates = 8, -- 一次最多显示的候选项数量
 
                           enable = 'auto',
                           -- 'on' - 始终启用中文输入补全

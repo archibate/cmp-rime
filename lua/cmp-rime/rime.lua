@@ -1,6 +1,6 @@
-local utils = require 'cmp_rime.utils'
-
 local M = {}
+
+local utils = require 'cmp-rime.utils'
 
 local defaults = {
     enable = 'auto',
@@ -11,7 +11,7 @@ local defaults = {
     rime_server_address = '127.0.0.1:47992',
     shared_data_dir = '/usr/share/rime-data',
     user_data_dir = vim.fn.getenv('HOME') .. '/.local/share/cmp-rime',
-    max_candidates = 10,
+    max_candidates = 8,
 }
 
 function M.new()
