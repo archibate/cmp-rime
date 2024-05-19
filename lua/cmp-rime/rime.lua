@@ -5,7 +5,8 @@ local utils = require 'cmp-rime.utils'
 local defaults = {
     enable = 'auto',
     context_range = 15,
-    not_same_line_penalty = 0.6,
+    context_threshold = 0.2,
+    not_same_line_penalty = 0.7,
     force_enable_prefix = 'rime',
     rime_server_cmd = './rime_server',
     rime_server_address = '127.0.0.1:47992',
@@ -30,6 +31,7 @@ function M.complete(_, request, callback)
     vim.validate({
         enable = { opts.enable, 'string' },
         context_range = { opts.context_range, 'number' },
+        context_threshold = { opts.context_threshold, 'number' },
         not_same_line_penalty = { opts.not_same_line_penalty, 'number' },
         force_enable_prefix = { opts.force_enable_prefix, 'string' },
         rime_server_cmd = { opts.rime_server_cmd, 'string' },
@@ -59,7 +61,7 @@ function M.complete(_, request, callback)
     local keys = text
     if opts.enable == 'auto' then
         local detected, same_line
-        keys, detected, same_line = utils.detect_context(text, cursor, opts.context_range, opts.force_enable_prefix)
+        keys, detected, same_line = utils.detect_context(text, cursor, opts.context_range, opts.context_threshold, opts.force_enable_prefix)
         if not detected then
             callback({
                 items = {},

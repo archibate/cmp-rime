@@ -61,15 +61,17 @@ function M.detect_chinese_english(line)
     return chinese, english
 end
 
-function M.remove_prefix(str, prefix)
+function M.remove_prefix_suffix(str, prefix)
     if str:sub(1, #prefix) == prefix then
         return str:sub(#prefix + 1), true
+    elseif str:sub(-#prefix) == prefix then
+        return str:sub(0, -#prefix - 1), true
     else
         return str, false
     end
 end
 
-function M.detect_context(keys, cursor, context_range, force_enable_prefix)
+function M.detect_context(keys, cursor, context_range, context_threshold, force_enable_prefix)
     local linecount = vim.api.nvim_buf_line_count(0)
     local line = vim.api.nvim_buf_get_lines(0, cursor.row - 1, cursor.row, false)[1]
     local chinese, english = M.detect_chinese_english(line)
@@ -85,9 +87,13 @@ function M.detect_context(keys, cursor, context_range, force_enable_prefix)
             english = english + e
         end
     end
-    local detected = chinese > 0 or english <= #keys
+    local detected = chinese > 0
+    if not detected or not same_line then
+        detected = chinese > math.floor((chinese + english) * context_threshold)
+    end
+    detected = detected or english <= #keys
     if not detected and force_enable_prefix ~= '' then
-        keys, detected = M.remove_prefix(keys, force_enable_prefix)
+        keys, detected = M.remove_prefix_suffix(keys, force_enable_prefix)
         if not detected and line:sub(0, cursor.col - #keys):find(force_enable_prefix) then
         detected = true
         same_line = true

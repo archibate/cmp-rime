@@ -5,6 +5,7 @@ local utils = require 'cmp-rime.utils'
 local defaults = {
     enable = 'auto',
     context_range = 5,
+    context_threshold = 5,
     force_enable_prefix = 'rime',
 
     -- puncations = {
@@ -178,6 +179,7 @@ function M.complete(_, request, callback)
     vim.validate({
         enable = { opts.enable, 'string' },
         context_range = { opts.context_range, 'number' },
+        context_threshold = { opts.context_threshold, 'number' },
         force_enable_prefix = { opts.force_enable_prefix, 'string' },
         puncations = { opts.puncations, 'table' },
     })
@@ -200,7 +202,7 @@ function M.complete(_, request, callback)
 
     if opts.enable == 'auto' then
         local detected
-        keys, detected = utils.detect_context(keys, cursor, opts.context_range, opts.force_enable_prefix)
+        keys, detected = utils.detect_context(keys, cursor, opts.context_range, opts.context_threshold, opts.force_enable_prefix)
         if not detected then
             callback({
                 items = {},
