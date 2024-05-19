@@ -42,4 +42,56 @@ function M.rpc(host, uri, body, callback)
     end
 end
 
+function M.detect_chinese_english(line)
+    if not line then
+        return 0, 0
+    end
+    local chinese = 0
+    local english = 0
+    for i = 1, #line do
+        local c = line:byte(i)
+        if 65 <= c and c <= 90 or 97 <= c and c <= 122 then
+            english = english + 1
+        elseif 228 <= c and c <= 233 then -- U+4E00-U9FFF (一~鿿)
+            chinese = chinese + 1
+        else
+        end
+    end
+    -- print(line, english, chinese)
+    return chinese, english
+end
+
+function M.remove_prefix(str, prefix)
+    if str:sub(1, #prefix) == prefix then
+        return str:sub(#prefix + 1), true
+    else
+        return str, false
+    end
+end
+
+function M.detect_context(keys, cursor, context_range, force_enable_prefix)
+    local linecount = vim.api.nvim_buf_line_count(0)
+    local line = vim.api.nvim_buf_get_lines(0, cursor.row - 1, cursor.row, false)[1]
+    local chinese, english = M.detect_chinese_english(line)
+    local same_line = true
+    if chinese == 0 then
+        same_line = false
+        local lines = vim.api.nvim_buf_get_lines(0, math.max(0, cursor.row - 1 - context_range), math.min(linecount, cursor.row + context_range), false)
+        for _, l in ipairs(lines) do
+            local c, e = M.detect_chinese_english(l)
+            chinese = chinese + c
+            english = english + e
+        end
+    end
+    local detected = chinese > 0
+    if not detected and force_enable_prefix ~= '' then
+        keys, detected = M.remove_prefix(keys, force_enable_prefix)
+        if not detected and line:find(force_enable_prefix) then
+        detected = true
+        same_line = true
+        end
+    end
+    return keys, detected, detected and same_line
+end
+
 return M

@@ -3,6 +3,10 @@ local utils = require 'cmp_rime.utils'
 local M = {}
 
 local defaults = {
+    enable = 'auto',
+    context_range = 15,
+    not_same_line_penalty = 0.6,
+    force_enable_prefix = 'rime',
     rime_server_cmd = './rime_server',
     rime_server_address = '127.0.0.1:47992',
     shared_data_dir = '/usr/share/rime-data',
@@ -11,39 +15,69 @@ local defaults = {
 }
 
 function M.new()
-  return setmetatable({}, { __index = M })
+    return setmetatable({}, { __index = M })
 end
 
 function M.get_keyword_pattern()
-  -- return [[.*]]
-  return [[\%([a-zA-Z]\)*]]
+    if M.disabled then
+        return [[]]
+    end
+    return [[\%([a-zA-Z]\)*]]
 end
 
 function M.complete(_, request, callback)
     local opts = vim.tbl_deep_extend('keep', request.option, defaults)
     vim.validate({
+        enable = { opts.enable, 'string' },
+        context_range = { opts.context_range, 'number' },
+        not_same_line_penalty = { opts.not_same_line_penalty, 'number' },
+        force_enable_prefix = { opts.force_enable_prefix, 'string' },
         rime_server_cmd = { opts.rime_server_cmd, 'string' },
         rime_server_address = { opts.rime_server_address, 'string' },
         shared_data_dir = { opts.shared_data_dir, 'string' },
         user_data_dir = { opts.user_data_dir, 'string' },
         max_candidates = { opts.max_candidates, 'number' },
     })
-    -- if request.option.enable then
-    -- end
 
-    local keys = string.sub(request.context.cursor_before_line, request.offset)
+    if M.disabled == nil then
+        if opts.enable == 'off' then
+            M.disabled = true
+            callback({
+                items = {},
+                isIncomplete = true,
+            })
+            return
+        else
+            M.disabled = false
+        end
+    end
+
+    local text = string.sub(request.context.cursor_before_line, request.offset)
     local cursor = request.context.cursor
+    local max_candidates = opts.max_candidates
 
-    -- vim.lsp.start({
-    --     name = 'cmp-rime',
-    --     cmd = {'sh', '-c', cmd},
-    -- })
+    local keys = text
+    if opts.enable == 'auto' then
+        local detected, same_line
+        keys, detected, same_line = utils.detect_context(text, cursor, opts.context_range, opts.force_enable_prefix)
+        if not detected then
+            callback({
+                items = {},
+                isIncomplete = true,
+            })
+            return
+        end
+        if not same_line then
+            max_candidates = math.ceil(max_candidates * opts.not_same_line_penalty)
+        end
+    end
+
     if not M.server then
         local thisdir = debug.getinfo(1).source:sub(2):match("(.*)/") .. "/../.."
         local cmd = "cd '" .. thisdir .. "' && " .. opts.rime_server_cmd .. " " .. opts.rime_server_address .. " >/dev/null 2>&1"
         local server = io.popen(cmd, 'r')
         if not server then
-            M.server = 'exist'
+            M.server = 'EXIST'
             local msg = string.format("--- SERVER START ERROR ---\n%s", cmd)
             return vim.notify(msg, vim.log.levels.ERROR, {title = 'Rime'})
         else
@@ -55,17 +89,17 @@ function M.complete(_, request, callback)
     local host = 'http://' .. serve_address
     utils.rpc(host, '/rpc/get_candidates', {
         key_sequence = keys,
-        max_candidates = opts.max_candidates,
+        max_candidates = max_candidates,
         shared_data_dir = opts.shared_data_dir,
         user_data_dir = opts.user_data_dir,
     }, function (result)
-            -- vim.notify(vim.inspect(result.candidates))
+            -- print(result.candidates)
             assert(type(result.candidates) == 'table', vim.inspect(result))
             local items = {}
             for i, candidate in ipairs(result.candidates) do
                 items[#items + 1] = {
                     label = candidate.text .. candidate.comment,
-                    filterText = keys,
+                    filterText = text,
                     sortText = "~" .. tostring(i + 100000),
                     kind = 0,
                     textEdit = {

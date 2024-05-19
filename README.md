@@ -13,7 +13,7 @@
 
 # 配置
 
-安装 rime_server 所需依赖项:
+安装所需依赖项:
 
 ```bash
 pacman -S librime liburing bearssl
@@ -33,19 +33,36 @@ use {
             sources = {
                   ...  -- 这里可以有你其他的补全模块，比如 nvim-lsp
                   {
-                      -- 这是 cmp-rime 的配置
+                      -- 这是我们中文输入法的配置
                       name = 'rime',
                       option = {
-                          -- 设置一次最多显示的候选项数量:
-                          max_candidates = 10,
+                          max_candidates = 10, -- 一次最多显示的候选项数量
 
-                          -- 设置配置文件目录，您可以设置和系统内的输入法共享
-                          -- 对于 fcitx 用户:
+                          enable = 'auto',
+                          -- 'on' - 始终启用中文输入补全
+                          -- 'off' - 始终禁止中文输入补全
+                          -- 'auto' - 根据上下文自动决定要不要启用中文输入
+
+                          context_range = 15, -- ±15 行上下文范围
+                          not_same_line_penalty = 0.6, -- 由上下文中的中文字符触发时，候选词减少至 6 个
+                          force_enable_prefix = 'rime', -- 输入此前缀后无视上下文强制启用
+
+                          user_data_dir = vim.fn.getenv('HOME') .. '/.local/share/cmp-rime',
+                          -- 您也可以设置为和系统内的输入法共享配置，例如对于 fcitx 用户:
                           user_data_dir = vim.fn.getenv('HOME') .. '/.config/fcitx/rime',
                           -- 对于 fcitx5 用户:
                           user_data_dir = vim.fn.getenv('HOME') .. '/.config/share/fcitx5/rime',
                           -- 对于 ibus 用户:
                           user_data_dir = vim.fn.getenv('HOME') .. '/.config/ibus/rime',
+                      },
+                  },
+                  {
+                      --（可选）支持全角标点和特殊符号输入
+                      name = 'rime_punct',
+                      option = {
+                          enable = 'auto',
+                          context_range = 5,
+                          force_enable_prefix = 'rime',
                       },
                   },
             },
