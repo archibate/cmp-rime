@@ -44,7 +44,7 @@ end
 
 function M.get_keyword_pattern()
   -- return [[[!@#$%%%^&*()%-=_+%[%]{}%\|;:'",<%.>/?~` ]*]]
-  return [[[%.,%\!?;()]*]]
+  return [[[%.,%\!?;%()]*]]
   -- return [[.*]]
 end
 

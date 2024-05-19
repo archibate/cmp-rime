@@ -15,6 +15,7 @@ function M.new()
 end
 
 function M.get_keyword_pattern()
+  -- return [[\%([a-zA-Z%.,%\!?;%(%)]\)*]]
   return [[\%([a-zA-Z]\)*]]
 end
 
@@ -49,13 +50,13 @@ function M.complete(_, request, callback)
     --     cmd = {'sh', '-c', cmd},
     -- })
     if not M.server then
-        local thisdir = debug.getinfo(1).source:sub(2):match("(.*)/")
+        local thisdir = debug.getinfo(1).source:sub(2):match("(.*)/") .. "/../.."
         local cmd = "cd '" .. thisdir .. "' && " .. opts.rime_server_cmd .. " " .. opts.rime_server_address .. " >/dev/null 2>&1"
         local server = io.popen(cmd, 'r')
         if not server then
-            -- local msg = string.format("--- SERVER START ERROR %d ---\n%s", cmd)
-            -- return vim.notify(msg, vim.log.levels.ERROR, {title = 'Rime'})
-            M.server = 'exist'
+            -- M.server = 'exist'
+            local msg = string.format("--- SERVER START ERROR %d ---\n%s", cmd)
+            return vim.notify(msg, vim.log.levels.ERROR, {title = 'Rime'})
         else
             M.server = server
         end
