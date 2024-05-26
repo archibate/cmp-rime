@@ -1,6 +1,4 @@
-#include <co_async/std.hpp>
-#include <co_async/co_async.hpp>
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#include "single_co_async.hpp"
 #include <rime_api.h>
 
 using namespace co_async;

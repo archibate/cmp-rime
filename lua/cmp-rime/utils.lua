@@ -24,21 +24,21 @@ function M.rpc(host, uri, body, callback)
             return vim.notify(msg, vim.log.levels.ERROR, {title = 'Rime'})
         end),
         callback = vim.schedule_wrap(function (res)
+            if res.status == 502 then
+                return
+            end
             if res.status ~= 200 then
-                local msg = string.format("--- HTTP ERROR %d ---\n%s", res.status, res.body)
-                return vim.notify(msg, vim.log.levels.ERROR, {title = 'Rime'})
+                return M.error("--- HTTP ERROR %d ---\n%s", res.status, res.body)
             end
             local success, result = pcall(vim.fn.json_decode, res.body)
             if not success then
-                local msg = string.format("--- JSON DECODE FAILURE ---\n%s", res.body)
-                return vim.notify(msg, vim.log.levels.ERROR, {title = 'Rime'})
+                return M.error("--- JSON DECODE FAILURE ---\n%s", res.body)
             end
             callback(result)
         end),
     })
     if not success then
-        local msg = string.format("--- CURL ERROR ---\n")
-        return vim.notify(msg, vim.log.levels.ERROR, {title = 'Rime'})
+        return M.error("--- CURL ERROR ---")
     end
 end
 
@@ -76,7 +76,7 @@ function M.detect_context(keys, cursor, context_range, context_threshold, force_
     local line = vim.api.nvim_buf_get_lines(0, cursor.row - 1, cursor.row, false)[1]
     local chinese, english = M.detect_chinese_english(line)
     local same_line = true
-    if chinese == 0 then
+    if chinese == 0 and context_range > 0 then
         chinese = 0
         english = 0
         same_line = false
@@ -89,9 +89,9 @@ function M.detect_context(keys, cursor, context_range, context_threshold, force_
     end
     local detected = chinese > 0
     if not detected or not same_line then
-        detected = chinese > math.floor((chinese + english) * context_threshold)
+        detected = chinese >= context_threshold
     end
-    detected = detected or english <= #keys
+    detected = detected or linecount == 1 and english <= #keys
     if not detected and force_enable_prefix ~= '' then
         keys, detected = M.remove_prefix_suffix(keys, force_enable_prefix)
         if not detected and line:sub(0, cursor.col - #keys):find(force_enable_prefix) then
@@ -100,6 +100,10 @@ function M.detect_context(keys, cursor, context_range, context_threshold, force_
         end
     end
     return keys, detected, detected and same_line
+end
+
+function M.error(msg, ...)
+    vim.notify(string.format(msg, ...), vim.log.levels.ERROR, {title = 'Rime'})
 end
 
 return M
